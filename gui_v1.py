@@ -16,7 +16,7 @@ stream_latency = -1
 
 
 def printt(strr, *args):
-    if len(args) == 0:
+    if not args:
         print(strr)
     else:
         print(strr % args)

@@ -143,11 +143,9 @@ class Pipeline(object):
             if not hasattr(self, "model_rmvpe"):
                 from infer.lib.rmvpe import RMVPE
 
-                logger.info(
-                    "Loading rmvpe model,%s" % "%s/rmvpe.pt" % os.environ["rmvpe_root"]
-                )
+                logger.info(f'Loading rmvpe model,{os.environ["rmvpe_root"]}/rmvpe.pt')
                 self.model_rmvpe = RMVPE(
-                    "%s/rmvpe.pt" % os.environ["rmvpe_root"],
+                    f'{os.environ["rmvpe_root"]}/rmvpe.pt',
                     is_half=self.is_half,
                     device=self.device,
                 )
@@ -199,10 +197,7 @@ class Pipeline(object):
         protect,
     ):  # ,file_index,file_big_npy
         feats = torch.from_numpy(audio0)
-        if self.is_half:
-            feats = feats.half()
-        else:
-            feats = feats.float()
+        feats = feats.half() if self.is_half else feats.float()
         if feats.dim() == 2:  # double channels
             feats = feats.mean(-1)
         assert feats.dim() == 1, feats.dim()
@@ -342,9 +337,7 @@ class Pipeline(object):
             try:
                 with open(f0_file.name, "r") as f:
                     lines = f.read().strip("\n").split("\n")
-                inp_f0 = []
-                for line in lines:
-                    inp_f0.append([float(i) for i in line.split(",")])
+                inp_f0 = [[float(i) for i in line.split(",")] for line in lines]
                 inp_f0 = np.array(inp_f0, dtype="float32")
             except:
                 traceback.print_exc()

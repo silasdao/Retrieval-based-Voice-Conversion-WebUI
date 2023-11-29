@@ -36,7 +36,7 @@ mm = M()
 
 
 def printt(strr, *args):
-    if len(args) == 0:
+    if not args:
         print(strr)
     else:
         print(strr % args)
@@ -102,10 +102,7 @@ class RVC:
                 )
                 hubert_model = models[0]
                 hubert_model = hubert_model.to(self.device)
-                if self.is_half:
-                    hubert_model = hubert_model.half()
-                else:
-                    hubert_model = hubert_model.float()
+                hubert_model = hubert_model.half() if self.is_half else hubert_model.float()
                 hubert_model.eval()
                 self.model = hubert_model
             else:
@@ -119,10 +116,7 @@ class RVC:
                 cpt["config"][-3] = cpt["weight"]["emb_g.weight"].shape[0]
                 self.if_f0 = cpt.get("f0", 1)
                 self.version = cpt.get("version", "v1")
-                if self.is_half:
-                    self.net_g = self.net_g.half()
-                else:
-                    self.net_g = self.net_g.float()
+                self.net_g = self.net_g.half() if self.is_half else self.net_g.float()
 
             def set_jit_model():
                 jit_pth_path = self.pth_path.rstrip(".pth")
@@ -337,10 +331,7 @@ class RVC:
         f0method,
     ) -> np.ndarray:
         feats = feats.view(1, -1)
-        if self.config.is_half:
-            feats = feats.half()
-        else:
-            feats = feats.float()
+        feats = feats.half() if self.config.is_half else feats.float()
         feats = feats.to(self.device)
         t1 = ttime()
         with torch.no_grad():

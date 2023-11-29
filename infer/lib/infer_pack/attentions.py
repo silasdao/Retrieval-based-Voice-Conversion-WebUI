@@ -37,7 +37,7 @@ class Encoder(nn.Module):
         self.norm_layers_1 = nn.ModuleList()
         self.ffn_layers = nn.ModuleList()
         self.norm_layers_2 = nn.ModuleList()
-        for i in range(self.n_layers):
+        for _ in range(self.n_layers):
             self.attn_layers.append(
                 MultiHeadAttention(
                     hidden_channels,
@@ -107,7 +107,7 @@ class Decoder(nn.Module):
         self.norm_layers_1 = nn.ModuleList()
         self.ffn_layers = nn.ModuleList()
         self.norm_layers_2 = nn.ModuleList()
-        for i in range(self.n_layers):
+        for _ in range(self.n_layers):
             self.self_attn_layers.append(
                 MultiHeadAttention(
                     hidden_channels,
@@ -293,8 +293,7 @@ class MultiHeadAttention(nn.Module):
         y: [h or 1, m, d]
         ret: [b, h, l, d]
         """
-        ret = torch.matmul(x, y.unsqueeze(0))
-        return ret
+        return torch.matmul(x, y.unsqueeze(0))
 
     def _matmul_with_relative_keys(self, x, y):
         """
@@ -302,8 +301,7 @@ class MultiHeadAttention(nn.Module):
         y: [h or 1, m, d]
         ret: [b, h, l, m]
         """
-        ret = torch.matmul(x, y.unsqueeze(0).transpose(-2, -1))
-        return ret
+        return torch.matmul(x, y.unsqueeze(0).transpose(-2, -1))
 
     def _get_relative_embeddings(self, relative_embeddings, length: int):
         max_relative_position = 2 * self.window_size + 1
@@ -319,10 +317,9 @@ class MultiHeadAttention(nn.Module):
             )
         else:
             padded_relative_embeddings = relative_embeddings
-        used_relative_embeddings = padded_relative_embeddings[
+        return padded_relative_embeddings[
             :, slice_start_position:slice_end_position
         ]
-        return used_relative_embeddings
 
     def _relative_position_to_absolute_position(self, x):
         """
@@ -345,11 +342,9 @@ class MultiHeadAttention(nn.Module):
             [0, int(length) - 1, 0, 0, 0, 0],
         )
 
-        # Reshape and slice out the padded elements.
-        x_final = x_flat.view([batch, heads, length + 1, 2 * length - 1])[
+        return x_flat.view([batch, heads, length + 1, 2 * length - 1])[
             :, :, :length, length - 1 :
         ]
-        return x_final
 
     def _absolute_position_to_relative_position(self, x):
         """
@@ -370,8 +365,7 @@ class MultiHeadAttention(nn.Module):
             #    commons.convert_pad_shape([[0, 0], [0, 0], [int(length), 0]])
             [length, 0, 0, 0, 0, 0],
         )
-        x_final = x_flat.view([batch, heads, length, 2 * length])[:, :, :, 1:]
-        return x_final
+        return x_flat.view([batch, heads, length, 2 * length])[:, :, :, 1:]
 
     def _attention_bias_proximal(self, length: int):
         """Bias for self-attention to encourage attention to close positions.
@@ -404,7 +398,7 @@ class FFN(nn.Module):
         self.p_dropout = p_dropout
         self.activation = activation
         self.causal = causal
-        self.is_activation = True if activation == "gelu" else False
+        self.is_activation = activation == "gelu"
         # if causal:
         #     self.padding = self._causal_padding
         # else:
@@ -415,18 +409,15 @@ class FFN(nn.Module):
         self.drop = nn.Dropout(p_dropout)
 
     def padding(self, x: torch.Tensor, x_mask: torch.Tensor) -> torch.Tensor:
-        if self.causal:
-            padding = self._causal_padding(x * x_mask)
-        else:
-            padding = self._same_padding(x * x_mask)
-        return padding
+        return (
+            self._causal_padding(x * x_mask)
+            if self.causal
+            else self._same_padding(x * x_mask)
+        )
 
     def forward(self, x: torch.Tensor, x_mask: torch.Tensor):
         x = self.conv_1(self.padding(x, x_mask))
-        if self.is_activation:
-            x = x * torch.sigmoid(1.702 * x)
-        else:
-            x = torch.relu(x)
+        x = x * torch.sigmoid(1.702 * x) if self.is_activation else torch.relu(x)
         x = self.drop(x)
 
         x = self.conv_2(self.padding(x, x_mask))

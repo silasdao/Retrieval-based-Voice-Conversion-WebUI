@@ -227,7 +227,7 @@ def run(
         global_step = 0
         if hps.pretrainG != "":
             if rank == 0:
-                logger.info("loaded pretrained %s" % (hps.pretrainG))
+                logger.info(f"loaded pretrained {hps.pretrainG}")
             if hasattr(net_g, "module"):
                 logger.info(
                     net_g.module.load_state_dict(
@@ -242,7 +242,7 @@ def run(
                 )  ##测试不加载优化器
         if hps.pretrainD != "":
             if rank == 0:
-                logger.info("loaded pretrained %s" % (hps.pretrainD))
+                logger.info(f"loaded pretrained {hps.pretrainD}")
             if hasattr(net_d, "module"):
                 logger.info(
                     net_d.module.load_state_dict(

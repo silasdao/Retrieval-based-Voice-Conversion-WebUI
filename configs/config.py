@@ -115,10 +115,7 @@ class Config:
 
     @staticmethod
     def has_xpu() -> bool:
-        if hasattr(torch, "xpu") and torch.xpu.is_available():
-            return True
-        else:
-            return False
+        return bool(hasattr(torch, "xpu") and torch.xpu.is_available())
 
     def use_fp32_config(self):
         for config_file in version_config_list:
@@ -247,5 +244,5 @@ class Config:
                     )
                 except:
                     pass
-        print("is_half:%s, device:%s" % (self.is_half, self.device))
+        print(f"is_half:{self.is_half}, device:{self.device}")
         return x_pad, x_query, x_center, x_max

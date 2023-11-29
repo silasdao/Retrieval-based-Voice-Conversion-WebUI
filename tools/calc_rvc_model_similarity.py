@@ -38,7 +38,7 @@ def model_hash(filename):
 
             file.seek(0x100000)
             m.update(file.read(0x10000))
-            return m.hexdigest()[0:8]
+            return m.hexdigest()[:8]
     except FileNotFoundError:
         return "NOFILE"
 
@@ -49,8 +49,7 @@ def eval(model, n, input):
     vk = f"enc_p.encoder.attn_layers.{n}.conv_v.weight"
     atoq, atok, atov = model[qk][:, :, 0], model[uk][:, :, 0], model[vk][:, :, 0]
 
-    attn = cal_cross_attn(atoq, atok, atov, input)
-    return attn
+    return cal_cross_attn(atoq, atok, atov, input)
 
 
 def main(path, root):
@@ -73,7 +72,7 @@ def main(path, root):
     del model_a
 
     for name in sorted(list(os.listdir(root))):
-        path = "%s/%s" % (root, name)
+        path = f"{root}/{name}"
         model_b = torch.load(path, map_location="cpu")["weight"]
 
         sims = []

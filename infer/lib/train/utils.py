@@ -137,15 +137,13 @@ def load_checkpoint(checkpoint_path, model, optimizer=None, load_opt=1):
         optimizer.load_state_dict(checkpoint_dict["optimizer"])
     #   except:
     #     traceback.print_exc()
-    logger.info("Loaded checkpoint '{}' (epoch {})".format(checkpoint_path, iteration))
+    logger.info(f"Loaded checkpoint '{checkpoint_path}' (epoch {iteration})")
     return model, optimizer, learning_rate, iteration
 
 
 def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path):
     logger.info(
-        "Saving model and optimizer state at epoch {} to {}".format(
-            iteration, checkpoint_path
-        )
+        f"Saving model and optimizer state at epoch {iteration} to {checkpoint_path}"
     )
     if hasattr(model, "module"):
         state_dict = model.module.state_dict()
@@ -164,9 +162,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
 
 def save_checkpoint_d(combd, sbd, optimizer, learning_rate, iteration, checkpoint_path):
     logger.info(
-        "Saving model and optimizer state at epoch {} to {}".format(
-            iteration, checkpoint_path
-        )
+        f"Saving model and optimizer state at epoch {iteration} to {checkpoint_path}"
     )
     if hasattr(combd, "module"):
         state_dict_combd = combd.module.state_dict()
@@ -382,7 +378,7 @@ def get_hparams(init=True):
     hparams.if_latest = args.if_latest
     hparams.save_every_weights = args.save_every_weights
     hparams.if_cache_data_in_gpu = args.if_cache_data_in_gpu
-    hparams.data.training_files = "%s/filelist.txt" % experiment_dir
+    hparams.data.training_files = f"{experiment_dir}/filelist.txt"
     return hparams
 
 
@@ -402,17 +398,14 @@ def get_hparams_from_file(config_path):
         data = f.read()
     config = json.loads(data)
 
-    hparams = HParams(**config)
-    return hparams
+    return HParams(**config)
 
 
 def check_git_hash(model_dir):
     source_dir = os.path.dirname(os.path.realpath(__file__))
     if not os.path.exists(os.path.join(source_dir, ".git")):
         logger.warning(
-            "{} is not a git repository, therefore hash value comparison will be ignored.".format(
-                source_dir
-            )
+            f"{source_dir} is not a git repository, therefore hash value comparison will be ignored."
         )
         return
 
@@ -423,9 +416,7 @@ def check_git_hash(model_dir):
         saved_hash = open(path).read()
         if saved_hash != cur_hash:
             logger.warning(
-                "git hash values are different. {}(saved) != {}(current)".format(
-                    saved_hash[:8], cur_hash[:8]
-                )
+                f"git hash values are different. {saved_hash[:8]}(saved) != {cur_hash[:8]}(current)"
             )
     else:
         open(path, "w").write(cur_hash)

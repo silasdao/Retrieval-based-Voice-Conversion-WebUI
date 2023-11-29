@@ -23,7 +23,7 @@ if __name__ == "__main__":
     dl_model(RVC_DOWNLOAD_LINK, "rmvpe.pt", BASE_DIR / "assets/rmvpe")
     print("Downloading vocals.onnx...")
     dl_model(
-        RVC_DOWNLOAD_LINK + "uvr5_weights/onnx_dereverb_By_FoxJoy/",
+        f"{RVC_DOWNLOAD_LINK}uvr5_weights/onnx_dereverb_By_FoxJoy/",
         "vocals.onnx",
         BASE_DIR / "assets/uvr5_weights/onnx_dereverb_By_FoxJoy",
     )
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     ]
     for model in model_names:
         print(f"Downloading {model}...")
-        dl_model(RVC_DOWNLOAD_LINK + "pretrained/", model, rvc_models_dir)
+        dl_model(f"{RVC_DOWNLOAD_LINK}pretrained/", model, rvc_models_dir)
 
     rvc_models_dir = BASE_DIR / "assets/pretrained_v2"
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     for model in model_names:
         print(f"Downloading {model}...")
-        dl_model(RVC_DOWNLOAD_LINK + "pretrained_v2/", model, rvc_models_dir)
+        dl_model(f"{RVC_DOWNLOAD_LINK}pretrained_v2/", model, rvc_models_dir)
 
     print("Downloading uvr5_weights:")
 
@@ -74,6 +74,6 @@ if __name__ == "__main__":
     ]
     for model in model_names:
         print(f"Downloading {model}...")
-        dl_model(RVC_DOWNLOAD_LINK + "uvr5_weights/", model, rvc_models_dir)
+        dl_model(f"{RVC_DOWNLOAD_LINK}uvr5_weights/", model, rvc_models_dir)
 
     print("All models downloaded!")

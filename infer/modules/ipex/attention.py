@@ -45,36 +45,35 @@ def torch_bmm(input, mat2, *, out=None):
     else:
         do_split_2 = False
 
-    if do_split:
-        hidden_states = torch.zeros(
-            input.shape[0],
-            input.shape[1],
-            mat2.shape[2],
-            device=input.device,
-            dtype=input.dtype,
-        )
-        for i in range(batch_size_attention // split_slice_size):
-            start_idx = i * split_slice_size
-            end_idx = (i + 1) * split_slice_size
-            if do_split_2:
-                for i2 in range(
-                    input_tokens // split_2_slice_size
-                ):  # pylint: disable=invalid-name
-                    start_idx_2 = i2 * split_2_slice_size
-                    end_idx_2 = (i2 + 1) * split_2_slice_size
-                    hidden_states[
-                        start_idx:end_idx, start_idx_2:end_idx_2
-                    ] = original_torch_bmm(
-                        input[start_idx:end_idx, start_idx_2:end_idx_2],
-                        mat2[start_idx:end_idx, start_idx_2:end_idx_2],
-                        out=out,
-                    )
-            else:
-                hidden_states[start_idx:end_idx] = original_torch_bmm(
-                    input[start_idx:end_idx], mat2[start_idx:end_idx], out=out
-                )
-    else:
+    if not do_split:
         return original_torch_bmm(input, mat2, out=out)
+    hidden_states = torch.zeros(
+        input.shape[0],
+        input.shape[1],
+        mat2.shape[2],
+        device=input.device,
+        dtype=input.dtype,
+    )
+    for i in range(batch_size_attention // split_slice_size):
+        start_idx = i * split_slice_size
+        end_idx = (i + 1) * split_slice_size
+        if do_split_2:
+            for i2 in range(
+                input_tokens // split_2_slice_size
+            ):  # pylint: disable=invalid-name
+                start_idx_2 = i2 * split_2_slice_size
+                end_idx_2 = (i2 + 1) * split_2_slice_size
+                hidden_states[
+                    start_idx:end_idx, start_idx_2:end_idx_2
+                ] = original_torch_bmm(
+                    input[start_idx:end_idx, start_idx_2:end_idx_2],
+                    mat2[start_idx:end_idx, start_idx_2:end_idx_2],
+                    out=out,
+                )
+        else:
+            hidden_states[start_idx:end_idx] = original_torch_bmm(
+                input[start_idx:end_idx], mat2[start_idx:end_idx], out=out
+            )
     return hidden_states
 
 
@@ -126,75 +125,7 @@ def scaled_dot_product_attention(
     else:
         do_split_2 = False
 
-    if do_split:
-        hidden_states = torch.zeros(query.shape, device=query.device, dtype=query.dtype)
-        for i in range(batch_size_attention // split_slice_size):
-            start_idx = i * split_slice_size
-            end_idx = (i + 1) * split_slice_size
-            if do_split_2:
-                for i2 in range(
-                    query_tokens // split_2_slice_size
-                ):  # pylint: disable=invalid-name
-                    start_idx_2 = i2 * split_2_slice_size
-                    end_idx_2 = (i2 + 1) * split_2_slice_size
-                    if no_shape_one:
-                        hidden_states[
-                            start_idx:end_idx, start_idx_2:end_idx_2
-                        ] = original_scaled_dot_product_attention(
-                            query[start_idx:end_idx, start_idx_2:end_idx_2],
-                            key[start_idx:end_idx, start_idx_2:end_idx_2],
-                            value[start_idx:end_idx, start_idx_2:end_idx_2],
-                            attn_mask=attn_mask[
-                                start_idx:end_idx, start_idx_2:end_idx_2
-                            ]
-                            if attn_mask is not None
-                            else attn_mask,
-                            dropout_p=dropout_p,
-                            is_causal=is_causal,
-                        )
-                    else:
-                        hidden_states[
-                            :, start_idx:end_idx, start_idx_2:end_idx_2
-                        ] = original_scaled_dot_product_attention(
-                            query[:, start_idx:end_idx, start_idx_2:end_idx_2],
-                            key[:, start_idx:end_idx, start_idx_2:end_idx_2],
-                            value[:, start_idx:end_idx, start_idx_2:end_idx_2],
-                            attn_mask=attn_mask[
-                                :, start_idx:end_idx, start_idx_2:end_idx_2
-                            ]
-                            if attn_mask is not None
-                            else attn_mask,
-                            dropout_p=dropout_p,
-                            is_causal=is_causal,
-                        )
-            else:
-                if no_shape_one:
-                    hidden_states[
-                        start_idx:end_idx
-                    ] = original_scaled_dot_product_attention(
-                        query[start_idx:end_idx],
-                        key[start_idx:end_idx],
-                        value[start_idx:end_idx],
-                        attn_mask=attn_mask[start_idx:end_idx]
-                        if attn_mask is not None
-                        else attn_mask,
-                        dropout_p=dropout_p,
-                        is_causal=is_causal,
-                    )
-                else:
-                    hidden_states[
-                        :, start_idx:end_idx
-                    ] = original_scaled_dot_product_attention(
-                        query[:, start_idx:end_idx],
-                        key[:, start_idx:end_idx],
-                        value[:, start_idx:end_idx],
-                        attn_mask=attn_mask[:, start_idx:end_idx]
-                        if attn_mask is not None
-                        else attn_mask,
-                        dropout_p=dropout_p,
-                        is_causal=is_causal,
-                    )
-    else:
+    if not do_split:
         return original_scaled_dot_product_attention(
             query,
             key,
@@ -203,6 +134,72 @@ def scaled_dot_product_attention(
             dropout_p=dropout_p,
             is_causal=is_causal,
         )
+    hidden_states = torch.zeros(query.shape, device=query.device, dtype=query.dtype)
+    for i in range(batch_size_attention // split_slice_size):
+        start_idx = i * split_slice_size
+        end_idx = (i + 1) * split_slice_size
+        if do_split_2:
+            for i2 in range(
+                query_tokens // split_2_slice_size
+            ):  # pylint: disable=invalid-name
+                start_idx_2 = i2 * split_2_slice_size
+                end_idx_2 = (i2 + 1) * split_2_slice_size
+                if no_shape_one:
+                    hidden_states[
+                        start_idx:end_idx, start_idx_2:end_idx_2
+                    ] = original_scaled_dot_product_attention(
+                        query[start_idx:end_idx, start_idx_2:end_idx_2],
+                        key[start_idx:end_idx, start_idx_2:end_idx_2],
+                        value[start_idx:end_idx, start_idx_2:end_idx_2],
+                        attn_mask=attn_mask[
+                            start_idx:end_idx, start_idx_2:end_idx_2
+                        ]
+                        if attn_mask is not None
+                        else attn_mask,
+                        dropout_p=dropout_p,
+                        is_causal=is_causal,
+                    )
+                else:
+                    hidden_states[
+                        :, start_idx:end_idx, start_idx_2:end_idx_2
+                    ] = original_scaled_dot_product_attention(
+                        query[:, start_idx:end_idx, start_idx_2:end_idx_2],
+                        key[:, start_idx:end_idx, start_idx_2:end_idx_2],
+                        value[:, start_idx:end_idx, start_idx_2:end_idx_2],
+                        attn_mask=attn_mask[
+                            :, start_idx:end_idx, start_idx_2:end_idx_2
+                        ]
+                        if attn_mask is not None
+                        else attn_mask,
+                        dropout_p=dropout_p,
+                        is_causal=is_causal,
+                    )
+        elif no_shape_one:
+            hidden_states[
+                start_idx:end_idx
+            ] = original_scaled_dot_product_attention(
+                query[start_idx:end_idx],
+                key[start_idx:end_idx],
+                value[start_idx:end_idx],
+                attn_mask=attn_mask[start_idx:end_idx]
+                if attn_mask is not None
+                else attn_mask,
+                dropout_p=dropout_p,
+                is_causal=is_causal,
+            )
+        else:
+            hidden_states[
+                :, start_idx:end_idx
+            ] = original_scaled_dot_product_attention(
+                query[:, start_idx:end_idx],
+                key[:, start_idx:end_idx],
+                value[:, start_idx:end_idx],
+                attn_mask=attn_mask[:, start_idx:end_idx]
+                if attn_mask is not None
+                else attn_mask,
+                dropout_p=dropout_p,
+                is_causal=is_causal,
+            )
     return hidden_states
 
 

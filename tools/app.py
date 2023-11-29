@@ -25,18 +25,15 @@ vc = VC(config)
 weight_root = os.getenv("weight_root")
 weight_uvr5_root = os.getenv("weight_uvr5_root")
 index_root = os.getenv("index_root")
-names = []
 hubert_model = None
-for name in os.listdir(weight_root):
-    if name.endswith(".pth"):
-        names.append(name)
+names = [name for name in os.listdir(weight_root) if name.endswith(".pth")]
 index_paths = []
 for root, dirs, files in os.walk(index_root, topdown=False):
-    for name in files:
-        if name.endswith(".index") and "trained" not in name:
-            index_paths.append("%s/%s" % (root, name))
-
-
+    index_paths.extend(
+        f"{root}/{name}"
+        for name in files
+        if name.endswith(".index") and "trained" not in name
+    )
 app = gr.Blocks()
 with app:
     with gr.Tabs():

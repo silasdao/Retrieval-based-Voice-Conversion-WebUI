@@ -38,11 +38,11 @@ def savee(ckpt, sr, if_f0, name, epoch, version, hps):
             hps.model.gin_channels,
             hps.data.sampling_rate,
         ]
-        opt["info"] = "%sepoch" % epoch
+        opt["info"] = f"{epoch}epoch"
         opt["sr"] = sr
         opt["f0"] = if_f0
         opt["version"] = version
-        torch.save(opt, "assets/weights/%s.pth" % name)
+        torch.save(opt, f"assets/weights/{name}.pth")
         return "Success."
     except:
         return traceback.format_exc()
@@ -185,7 +185,7 @@ def extract_small_model(path, name, sr, if_f0, info, version):
         opt["version"] = version
         opt["sr"] = sr
         opt["f0"] = int(if_f0)
-        torch.save(opt, "assets/weights/%s.pth" % name)
+        torch.save(opt, f"assets/weights/{name}.pth")
         return "Success."
     except:
         return traceback.format_exc()
@@ -197,7 +197,7 @@ def change_info(path, info, name):
         ckpt["info"] = info
         if name == "":
             name = os.path.basename(path)
-        torch.save(ckpt, "assets/weights/%s" % name)
+        torch.save(ckpt, f"assets/weights/{name}")
         return "Success."
     except:
         return traceback.format_exc()
@@ -219,14 +219,8 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
         ckpt1 = torch.load(path1, map_location="cpu")
         ckpt2 = torch.load(path2, map_location="cpu")
         cfg = ckpt1["config"]
-        if "model" in ckpt1:
-            ckpt1 = extract(ckpt1)
-        else:
-            ckpt1 = ckpt1["weight"]
-        if "model" in ckpt2:
-            ckpt2 = extract(ckpt2)
-        else:
-            ckpt2 = ckpt2["weight"]
+        ckpt1 = extract(ckpt1) if "model" in ckpt1 else ckpt1["weight"]
+        ckpt2 = extract(ckpt2) if "model" in ckpt2 else ckpt2["weight"]
         if sorted(list(ckpt1.keys())) != sorted(list(ckpt2.keys())):
             return "Fail to merge the models. The model architectures are not the same."
         opt = OrderedDict()
@@ -255,7 +249,7 @@ def merge(path1, path2, alpha1, sr, f0, info, name, version):
         opt["f0"] = 1 if f0 == i18n("是") else 0
         opt["version"] = version
         opt["info"] = info
-        torch.save(opt, "assets/weights/%s.pth" % name)
+        torch.save(opt, f"assets/weights/{name}.pth")
         return "Success."
     except:
         return traceback.format_exc()

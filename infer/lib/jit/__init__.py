@@ -23,7 +23,7 @@ def benchmark(
     parm = load_inputs(inputs_path, device, is_half)
     total_ts = 0.0
     bar = tqdm(range(epoch))
-    for i in bar:
+    for _ in bar:
         start_time = time.perf_counter()
         o = model(**parm)
         total_ts += time.perf_counter() - start_time
@@ -118,16 +118,13 @@ def rmvpe_jit_export(
     is_half=False,
 ):
     if not save_path:
-        save_path = model_path.rstrip(".pth")
-        save_path += ".half.jit" if is_half else ".jit"
+        save_path = model_path.rstrip(".pth") + (".half.jit" if is_half else ".jit")
     if "cuda" in str(device) and ":" not in str(device):
         device = torch.device("cuda:0")
     from .get_rmvpe import get_rmvpe
 
     model = get_rmvpe(model_path, device)
-    inputs = None
-    if mode == "trace":
-        inputs = load_inputs(inputs_path, device, is_half)
+    inputs = load_inputs(inputs_path, device, is_half) if mode == "trace" else None
     ckpt = export(model, mode, inputs, device, is_half)
     ckpt["device"] = str(device)
     save(ckpt, save_path)
@@ -143,8 +140,7 @@ def synthesizer_jit_export(
     is_half=False,
 ):
     if not save_path:
-        save_path = model_path.rstrip(".pth")
-        save_path += ".half.jit" if is_half else ".jit"
+        save_path = model_path.rstrip(".pth") + (".half.jit" if is_half else ".jit")
     if "cuda" in str(device) and ":" not in str(device):
         device = torch.device("cuda:0")
     from .get_synthesizer import get_synthesizer
@@ -152,9 +148,7 @@ def synthesizer_jit_export(
     model, cpt = get_synthesizer(model_path, device)
     assert isinstance(cpt, dict)
     model.forward = model.infer
-    inputs = None
-    if mode == "trace":
-        inputs = load_inputs(inputs_path, device, is_half)
+    inputs = load_inputs(inputs_path, device, is_half) if mode == "trace" else None
     ckpt = export(model, mode, inputs, device, is_half)
     cpt.pop("weight")
     cpt["model"] = ckpt["model"]

@@ -34,7 +34,7 @@ class VC:
         self.config = config
 
     def get_vc(self, sid, *to_return_protect):
-        logger.info("Get sid: " + sid)
+        logger.info(f"Get sid: {sid}")
 
         to_return_protect0 = {
             "visible": self.if_f0 != 0,
@@ -51,7 +51,7 @@ class VC:
             "__type__": "update",
         }
 
-        if sid == "" or sid == []:
+        if sid in ["", []]:
             if self.hubert_model is not None:  # 考虑到轮询, 需要加个判断看是否 sid 是由有模型切换到无模型的
                 logger.info("Clean model cache")
                 del (self.net_g, self.n_spk, self.hubert_model, self.tgt_sr)  # ,cpt
@@ -64,19 +64,21 @@ class VC:
                 self.if_f0 = self.cpt.get("f0", 1)
                 self.version = self.cpt.get("version", "v1")
                 if self.version == "v1":
-                    if self.if_f0 == 1:
-                        self.net_g = SynthesizerTrnMs256NSFsid(
+                    self.net_g = (
+                        SynthesizerTrnMs256NSFsid(
                             *self.cpt["config"], is_half=self.config.is_half
                         )
-                    else:
-                        self.net_g = SynthesizerTrnMs256NSFsid_nono(*self.cpt["config"])
+                        if self.if_f0 == 1
+                        else SynthesizerTrnMs256NSFsid_nono(*self.cpt["config"])
+                    )
                 elif self.version == "v2":
-                    if self.if_f0 == 1:
-                        self.net_g = SynthesizerTrnMs768NSFsid(
+                    self.net_g = (
+                        SynthesizerTrnMs768NSFsid(
                             *self.cpt["config"], is_half=self.config.is_half
                         )
-                    else:
-                        self.net_g = SynthesizerTrnMs768NSFsid_nono(*self.cpt["config"])
+                        if self.if_f0 == 1
+                        else SynthesizerTrnMs768NSFsid_nono(*self.cpt["config"])
+                    )
                 del self.net_g, self.cpt
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
@@ -119,11 +121,7 @@ class VC:
 
         self.net_g.load_state_dict(self.cpt["weight"], strict=False)
         self.net_g.eval().to(self.config.device)
-        if self.config.is_half:
-            self.net_g = self.net_g.half()
-        else:
-            self.net_g = self.net_g.float()
-
+        self.net_g = self.net_g.half() if self.config.is_half else self.net_g.float()
         self.pipeline = Pipeline(self.tgt_sr, self.config)
         n_spk = self.cpt["config"][-3]
         index = {"value": get_index_path_from_model(sid), "__type__": "update"}
@@ -202,10 +200,7 @@ class VC:
                 protect,
                 f0_file,
             )
-            if self.tgt_sr != resample_sr >= 16000:
-                tgt_sr = resample_sr
-            else:
-                tgt_sr = self.tgt_sr
+            tgt_sr = resample_sr if self.tgt_sr != resample_sr >= 16000 else self.tgt_sr
             index_info = (
                 "Index:\n%s." % file_index
                 if os.path.exists(file_index)
@@ -275,18 +270,9 @@ class VC:
                     try:
                         tgt_sr, audio_opt = opt
                         if format1 in ["wav", "flac"]:
-                            sf.write(
-                                "%s/%s.%s"
-                                % (opt_root, os.path.basename(path), format1),
-                                audio_opt,
-                                tgt_sr,
-                            )
+                            sf.write(f"{opt_root}/{os.path.basename(path)}.{format1}", audio_opt, tgt_sr)
                         else:
-                            path = "%s/%s.%s" % (
-                                opt_root,
-                                os.path.basename(path),
-                                format1,
-                            )
+                            path = f"{opt_root}/{os.path.basename(path)}.{format1}"
                             with BytesIO() as wavf:
                                 sf.write(wavf, audio_opt, tgt_sr, format="wav")
                                 wavf.seek(0, 0)
@@ -294,7 +280,7 @@ class VC:
                                     wav2(wavf, outf, format1)
                     except:
                         info += traceback.format_exc()
-                infos.append("%s->%s" % (os.path.basename(path), info))
+                infos.append(f"{os.path.basename(path)}->{info}")
                 yield "\n".join(infos)
             yield "\n".join(infos)
         except:

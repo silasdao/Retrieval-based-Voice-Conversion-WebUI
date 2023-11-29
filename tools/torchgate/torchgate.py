@@ -170,9 +170,7 @@ class TorchGate(torch.nn.Module):
         # compute noise threshold
         noise_thresh = mean_freq_noise + std_freq_noise * self.n_std_thresh_stationary
 
-        # create binary mask by thresholding the spectrogram
-        sig_mask = X_db > noise_thresh.unsqueeze(2)
-        return sig_mask
+        return X_db > noise_thresh.unsqueeze(2)
 
     @torch.no_grad()
     def _nonstationary_mask(self, X_abs: torch.Tensor) -> torch.Tensor:
@@ -201,11 +199,11 @@ class TorchGate(torch.nn.Module):
 
         # Compute slowness ratio and apply temperature sigmoid
         slowness_ratio = (X_abs - X_smoothed) / (X_smoothed + 1e-6)
-        sig_mask = temperature_sigmoid(
-            slowness_ratio, self.n_thresh_nonstationary, self.temp_coeff_nonstationary
+        return temperature_sigmoid(
+            slowness_ratio,
+            self.n_thresh_nonstationary,
+            self.temp_coeff_nonstationary,
         )
-
-        return sig_mask
 
     def forward(
         self, x: torch.Tensor, xn: Optional[torch.Tensor] = None

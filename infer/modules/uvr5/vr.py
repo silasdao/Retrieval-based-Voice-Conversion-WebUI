@@ -33,11 +33,7 @@ class AudioPre:
         cpk = torch.load(model_path, map_location="cpu")
         model.load_state_dict(cpk)
         model.eval()
-        if is_half:
-            model = model.half().to(device)
-        else:
-            model = model.to(device)
-
+        model = model.half().to(device) if is_half else model.to(device)
         self.mp = mp
         self.model = model
 
@@ -121,42 +117,33 @@ class AudioPre:
                 )
             else:
                 wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
-            logger.info("%s instruments done" % name)
-            if is_hp3 == True:
-                head = "vocal_"
-            else:
-                head = "instrument_"
+            logger.info(f"{name} instruments done")
+            head = "vocal_" if is_hp3 == True else "instrument_"
             if format in ["wav", "flac"]:
                 sf.write(
                     os.path.join(
-                        ins_root,
-                        head + "{}_{}.{}".format(name, self.data["agg"], format),
+                        ins_root, f'{head}{name}_{self.data["agg"]}.{format}'
                     ),
                     (np.array(wav_instrument) * 32768).astype("int16"),
                     self.mp.param["sr"],
-                )  #
-            else:
-                path = os.path.join(
-                    ins_root, head + "{}_{}.wav".format(name, self.data["agg"])
                 )
+            else:
+                path = os.path.join(ins_root, f'{head}{name}_{self.data["agg"]}.wav')
                 sf.write(
                     path,
                     (np.array(wav_instrument) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
                 if os.path.exists(path):
-                    opt_format_path = path[:-4] + ".%s" % format
-                    os.system("ffmpeg -i %s -vn %s -q:a 2 -y" % (path, opt_format_path))
+                    opt_format_path = f"{path[:-4]}.{format}"
+                    os.system(f"ffmpeg -i {path} -vn {opt_format_path} -q:a 2 -y")
                     if os.path.exists(opt_format_path):
                         try:
                             os.remove(path)
                         except:
                             pass
         if vocal_root is not None:
-            if is_hp3 == True:
-                head = "instrument_"
-            else:
-                head = "vocal_"
+            head = "instrument_" if is_hp3 == True else "vocal_"
             if self.data["high_end_process"].startswith("mirroring"):
                 input_high_end_ = spec_utils.mirroring(
                     self.data["high_end_process"], v_spec_m, input_high_end, self.mp
@@ -166,28 +153,25 @@ class AudioPre:
                 )
             else:
                 wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
-            logger.info("%s vocals done" % name)
+            logger.info(f"{name} vocals done")
             if format in ["wav", "flac"]:
                 sf.write(
                     os.path.join(
-                        vocal_root,
-                        head + "{}_{}.{}".format(name, self.data["agg"], format),
+                        vocal_root, f'{head}{name}_{self.data["agg"]}.{format}'
                     ),
                     (np.array(wav_vocals) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
             else:
-                path = os.path.join(
-                    vocal_root, head + "{}_{}.wav".format(name, self.data["agg"])
-                )
+                path = os.path.join(vocal_root, f'{head}{name}_{self.data["agg"]}.wav')
                 sf.write(
                     path,
                     (np.array(wav_vocals) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
                 if os.path.exists(path):
-                    opt_format_path = path[:-4] + ".%s" % format
-                    os.system("ffmpeg -i %s -vn %s -q:a 2 -y" % (path, opt_format_path))
+                    opt_format_path = f"{path[:-4]}.{format}"
+                    os.system(f"ffmpeg -i {path} -vn {opt_format_path} -q:a 2 -y")
                     if os.path.exists(opt_format_path):
                         try:
                             os.remove(path)
@@ -214,11 +198,7 @@ class AudioPreDeEcho:
         cpk = torch.load(model_path, map_location="cpu")
         model.load_state_dict(cpk)
         model.eval()
-        if is_half:
-            model = model.half().to(device)
-        else:
-            model = model.to(device)
-
+        model = model.half().to(device) if is_half else model.to(device)
         self.mp = mp
         self.model = model
 
@@ -302,28 +282,25 @@ class AudioPreDeEcho:
                 )
             else:
                 wav_instrument = spec_utils.cmb_spectrogram_to_wave(y_spec_m, self.mp)
-            logger.info("%s instruments done" % name)
+            logger.info(f"{name} instruments done")
             if format in ["wav", "flac"]:
                 sf.write(
                     os.path.join(
-                        ins_root,
-                        "instrument_{}_{}.{}".format(name, self.data["agg"], format),
+                        ins_root, f'instrument_{name}_{self.data["agg"]}.{format}'
                     ),
                     (np.array(wav_instrument) * 32768).astype("int16"),
                     self.mp.param["sr"],
-                )  #
-            else:
-                path = os.path.join(
-                    ins_root, "instrument_{}_{}.wav".format(name, self.data["agg"])
                 )
+            else:
+                path = os.path.join(ins_root, f'instrument_{name}_{self.data["agg"]}.wav')
                 sf.write(
                     path,
                     (np.array(wav_instrument) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
                 if os.path.exists(path):
-                    opt_format_path = path[:-4] + ".%s" % format
-                    os.system("ffmpeg -i %s -vn %s -q:a 2 -y" % (path, opt_format_path))
+                    opt_format_path = f"{path[:-4]}.{format}"
+                    os.system(f"ffmpeg -i {path} -vn {opt_format_path} -q:a 2 -y")
                     if os.path.exists(opt_format_path):
                         try:
                             os.remove(path)
@@ -339,28 +316,25 @@ class AudioPreDeEcho:
                 )
             else:
                 wav_vocals = spec_utils.cmb_spectrogram_to_wave(v_spec_m, self.mp)
-            logger.info("%s vocals done" % name)
+            logger.info(f"{name} vocals done")
             if format in ["wav", "flac"]:
                 sf.write(
                     os.path.join(
-                        vocal_root,
-                        "vocal_{}_{}.{}".format(name, self.data["agg"], format),
+                        vocal_root, f'vocal_{name}_{self.data["agg"]}.{format}'
                     ),
                     (np.array(wav_vocals) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
             else:
-                path = os.path.join(
-                    vocal_root, "vocal_{}_{}.wav".format(name, self.data["agg"])
-                )
+                path = os.path.join(vocal_root, f'vocal_{name}_{self.data["agg"]}.wav')
                 sf.write(
                     path,
                     (np.array(wav_vocals) * 32768).astype("int16"),
                     self.mp.param["sr"],
                 )
                 if os.path.exists(path):
-                    opt_format_path = path[:-4] + ".%s" % format
-                    os.system("ffmpeg -i %s -vn %s -q:a 2 -y" % (path, opt_format_path))
+                    opt_format_path = f"{path[:-4]}.{format}"
+                    os.system(f"ffmpeg -i {path} -vn {opt_format_path} -q:a 2 -y")
                     if os.path.exists(opt_format_path):
                         try:
                             os.remove(path)

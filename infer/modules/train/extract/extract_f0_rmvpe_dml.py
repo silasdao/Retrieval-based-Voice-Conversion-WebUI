@@ -19,7 +19,7 @@ exp_dir = sys.argv[1]
 import torch_directml
 
 device = torch_directml.device(torch_directml.default_device())
-f = open("%s/extract_f0_feature.log" % exp_dir, "a+")
+f = open(f"{exp_dir}/extract_f0_feature.log", "a+")
 
 
 def printt(strr):
@@ -73,15 +73,15 @@ class FeatureInput(object):
         if len(paths) == 0:
             printt("no-f0-todo")
         else:
-            printt("todo-f0-%s" % len(paths))
+            printt(f"todo-f0-{len(paths)}")
             n = max(len(paths) // 5, 1)  # 每个进程最多打印5条
             for idx, (inp_path, opt_path1, opt_path2) in enumerate(paths):
                 try:
                     if idx % n == 0:
-                        printt("f0ing,now-%s,all-%s,-%s" % (idx, len(paths), inp_path))
+                        printt(f"f0ing,now-{idx},all-{len(paths)},-{inp_path}")
                     if (
-                        os.path.exists(opt_path1 + ".npy") == True
-                        and os.path.exists(opt_path2 + ".npy") == True
+                        os.path.exists(f"{opt_path1}.npy") == True
+                        and os.path.exists(f"{opt_path2}.npy") == True
                     ):
                         continue
                     featur_pit = self.compute_f0(inp_path, f0_method)
@@ -97,7 +97,7 @@ class FeatureInput(object):
                         allow_pickle=False,
                     )  # ori
                 except:
-                    printt("f0fail-%s-%s-%s" % (idx, inp_path, traceback.format_exc()))
+                    printt(f"f0fail-{idx}-{inp_path}-{traceback.format_exc()}")
 
 
 if __name__ == "__main__":
@@ -107,23 +107,23 @@ if __name__ == "__main__":
     printt(sys.argv)
     featureInput = FeatureInput()
     paths = []
-    inp_root = "%s/1_16k_wavs" % (exp_dir)
-    opt_root1 = "%s/2a_f0" % (exp_dir)
-    opt_root2 = "%s/2b-f0nsf" % (exp_dir)
+    inp_root = f"{exp_dir}/1_16k_wavs"
+    opt_root1 = f"{exp_dir}/2a_f0"
+    opt_root2 = f"{exp_dir}/2b-f0nsf"
 
     os.makedirs(opt_root1, exist_ok=True)
     os.makedirs(opt_root2, exist_ok=True)
     for name in sorted(list(os.listdir(inp_root))):
-        inp_path = "%s/%s" % (inp_root, name)
+        inp_path = f"{inp_root}/{name}"
         if "spec" in inp_path:
             continue
-        opt_path1 = "%s/%s" % (opt_root1, name)
-        opt_path2 = "%s/%s" % (opt_root2, name)
+        opt_path1 = f"{opt_root1}/{name}"
+        opt_path2 = f"{opt_root2}/{name}"
         paths.append([inp_path, opt_path1, opt_path2])
     try:
         featureInput.go(paths, "rmvpe")
     except:
-        printt("f0_all_fail-%s" % (traceback.format_exc()))
+        printt(f"f0_all_fail-{traceback.format_exc()}")
     # ps = []
     # for i in range(n_p):
     #     p = Process(
